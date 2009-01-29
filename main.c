@@ -1838,7 +1838,6 @@ DEFUN(isrchbak_nomigemo, ISEARCH_BACK_NOMIGEMO,
     isrch(backwardSearchNoMigemo, "I-search backward: ");
 }
 
-
 static void
 srch_nxtprv(int reverse)
 {
