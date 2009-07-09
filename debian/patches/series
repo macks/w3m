@@ -2,3 +2,4 @@
 04-ja-w3m.1-debian-fix
 05-config-debian-fix
 90-w3m-cvs-1.914-ambwidth.patch
+91-w3m_url-completion.diff
