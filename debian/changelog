@@ -1,3 +1,9 @@
+w3m (0.5.2-2.x) unstable; urgency=low
+
+  * Build from http://github.com/macks/w3m
+
+ -- MATSUYAMA Kengo <macksx@gmail.com>  Fri, 10 Jul 2009 04:24:50 +0900
+
 w3m (0.5.2-2) unstable; urgency=low
 
   * debian/control:
