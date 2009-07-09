@@ -69,6 +69,9 @@ AC_W3M_HISTORY
 AC_W3M_ALARM
 
 AC_W3M_COOKIE
+if test x"$enable_cookie" != xno; then
+  AUXBIN_TARGETS="$AUXBIN_TARGETS w3mcooksrv\$(EXT)"
+fi
 AC_W3M_NNTP
 AC_W3M_GOPHER
 

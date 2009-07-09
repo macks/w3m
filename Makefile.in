@@ -106,6 +106,7 @@ BOOKMARKER=w3mbookmark$(EXT)
 HELPER=w3mhelperpanel$(EXT)
 INFLATE=inflate$(EXT)
 IMGDISPLAY=w3mimgdisplay$(EXT)
+COOKIESERVER=w3mcooksrv$(EXT)
 MAN1_TARGET=$(PACKAGE).1
 MAN1=$(top_srcdir)/doc/w3m.1
 MAN1_JA=$(top_srcdir)/doc-jp/w3m.1
@@ -202,8 +203,8 @@ w3mimg/w3mimg.a: w3mimg
 w3mimg:
 	(cd w3mimg && $(MAKE) CC="$(CC0)" OPTS="$(OPTS)")
 
-w3mcooksrv: $(OBJS) w3mcooksrv.c
-	$(CC) -DCOOKIE_SERVER -o w3mcooksrv w3mcooksrv.c cookie.c Str.o regex.o entity.o libwc/*.o $(CFLAGS) $(LDFLAGS) $(LIBS) $(EXT_LIBS) $(W3M_LIBS)
+$(COOKIESERVER): $(OBJS) w3mcooksrv.c
+	$(CC) -DCOOKIE_SERVER -o $(COOKIESERVER) w3mcooksrv.c cookie.c Str.o regex.o entity.o libwc/*.o $(CFLAGS) $(LDFLAGS) $(LIBS) $(EXT_LIBS) $(W3M_LIBS)
 
 po:
 	(cd $@ && $(MAKE))

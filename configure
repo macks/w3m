@@ -6051,6 +6051,9 @@ _ACEOF
 
 { echo "$as_me:$LINENO: result: $enable_cookie" >&5
 echo "${ECHO_T}$enable_cookie" >&6; }
+if test x"$enable_cookie" != xno; then
+  AUXBIN_TARGETS="$AUXBIN_TARGETS w3mcooksrv\$(EXT)"
+fi
 
  { echo "$as_me:$LINENO: checking if nntp is enabled" >&5
 echo $ECHO_N "checking if nntp is enabled... $ECHO_C" >&6; }
