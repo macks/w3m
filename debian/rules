@@ -1,0 +1,98 @@
+#!/usr/bin/make -f
+
+#export DH_VERBOSE=1
+
+include /usr/share/quilt/quilt.make
+
+ifeq ($(DEB_BUILD_GNU_SYSTEM),linux-gnu)
+  DEVS=x11,fb+s
+else
+  DEVS=x11
+endif
+
+confargs := --prefix=/usr --sysconfdir=/etc --libexecdir=/usr/lib \
+	--mandir=/usr/share/man \
+	--with-gc --with-ssl \
+	--with-migemo="migemo -t egrep /usr/share/migemo/migemo-dict" \
+	--with-editor=/usr/bin/sensible-editor \
+	--enable-gopher \
+	--enable-image=$(DEVS) \
+	--enable-m17n --enable-unicode --enable-nls
+
+builddir := .
+
+build: build-stamp
+build-stamp: debian/stamp-patched
+	dh_testdir
+	-cp /usr/share/misc/config.guess .
+	-cp /usr/share/misc/config.sub .
+	cd $(builddir) && ./configure $(confargs)
+	cd $(builddir) && LC_ALL=C $(MAKE) OPTS="-Wall -g -DDEBIAN"
+	cd $(builddir)/po && LC_ALL=C $(MAKE) update-gmo
+	touch build-stamp
+
+clean: unpatch
+	dh_testdir
+	dh_testroot
+	if test -f $(builddir)/Makefile; then cd $(builddir) && $(MAKE) distclean; fi
+	rm -f $(builddir)/po/*.gmo
+	rm -f $(builddir)/po/stamp-po
+	rm -f extract-stamp patch-stamp configure-stamp build-stamp install-stamp
+	dh_clean
+
+install: install-stamp
+install-stamp: build-stamp
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Add here commands to install the package into debian/w3m.
+	cd $(builddir) && $(MAKE) install DESTDIR=`pwd`/debian/w3m
+	cd $(builddir)/Bonus && find . -type f -perm 0100 -print | \
+	while read i; \
+	do \
+		sed -e 's:/usr/local/bin/ruby:/usr/bin/ruby:' \
+		    -e 's:/bin/env:/usr/bin/env:' \
+			$$i \
+			> `pwd`/../../../debian/w3m/usr/share/doc/w3m/examples/$$i ; \
+	done
+	install -m 644 debian/w3mconfig `pwd`/debian/w3m/etc/w3m/config
+	install -m 644 debian/mailcap `pwd`/debian/w3m/etc/w3m/mailcap
+	dh_movefiles --sourcedir=debian/w3m
+	touch install-stamp
+
+binary-indep: build-stamp install-stamp
+# We have nothing to do by default.
+
+binary-arch: build-stamp install-stamp
+	dh_testdir -a
+	dh_testroot -a
+	dh_installdocs -a
+	cp -a $(builddir)/doc-jp/* `pwd`/debian/w3m/usr/share/doc/w3m/ja/
+	-rm -f `pwd`/debian/w3m/usr/share/doc/w3m/ja/README.kokb
+	-rm -rf `pwd`/debian/w3m/usr/share/doc/w3m/ja/CVS
+	cp debian/README.Debian.w3m-img `pwd`/debian/w3m-img/usr/share/doc/w3m-img/README.Debian
+	dh_installexamples -a
+	cd `pwd`/debian/w3m/usr/share/doc/w3m && \
+		mv ja/keymap.* ja/examples; mv ja/menu.* ja/examples
+	dh_installmenu
+	dh_installmime
+#	dh_installman
+#	dh_installchangelogs $(builddir)/doc/HISTORY
+	dh_installchangelogs -a $(builddir)/ChangeLog
+	dh_strip -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_installdeb -a
+	dh_shlibdeps -a
+	dh_gencontrol -a
+#	dh_makeshlibs -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+source diff:                                                                  
+	@echo >&2 'source and diff are obsolete - use dpkg-source -b'; false
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary
