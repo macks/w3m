@@ -195,6 +195,7 @@ static int OptionEncode = FALSE;
 #define CMT_USECOOKIE   N_("Enable cookie processing")
 #define CMT_SHOWCOOKIE  N_("Print a message when receiving a cookie")
 #define CMT_ACCEPTCOOKIE N_("Accept cookies")
+#define CMT_SYNCCOOKIE   N_("Sync cookie")
 #define CMT_ACCEPTBADCOOKIE N_("Action to be taken on invalid cookie")
 #define CMT_COOKIE_REJECT_DOMAINS N_("Domains to reject cookies from")
 #define CMT_COOKIE_ACCEPT_DOMAINS N_("Domains to accept cookies from")
@@ -330,6 +331,15 @@ static struct sel_c auto_detect_str[] = {
 };
 #endif
 
+#ifdef USE_HISTORY
+static struct sel_c when_save_hist[] = {
+    {N_S(WHEN_SAVE_HIST_NEVER), N_("never")},
+    {N_S(WHEN_SAVE_HIST_QUIT), N_("quit")},
+    {N_S(WHEN_SAVE_HIST_ALWAYS), N_("always")},
+    {0, NULL, NULL}
+};
+#endif
+
 struct param_ptr params1[] = {
     {"tabstop", P_NZINT, PI_TEXT, (void *)&Tabstop, CMT_TABSTOP, NULL},
     {"indent_incr", P_NZINT, PI_TEXT, (void *)&IndentIncr, CMT_INDENT_INCR,
@@ -431,13 +441,18 @@ struct param_ptr params2[] = {
 #endif				/* USE_COLOR */
 
 
-struct param_ptr params3[] = {
-    {"pagerline", P_NZINT, PI_TEXT, (void *)&PagerMax, CMT_PAGERLINE, NULL},
 #ifdef USE_HISTORY
+struct param_ptr params11[] = {
     {"use_history", P_INT, PI_ONOFF, (void *)&UseHistory, CMT_HISTORY, NULL},
     {"history", P_INT, PI_TEXT, (void *)&URLHistSize, CMT_HISTSIZE, NULL},
-    {"save_hist", P_INT, PI_ONOFF, (void *)&SaveURLHist, CMT_SAVEHIST, NULL},
+    {"save_hist", P_INT, PI_SEL_C, (void *)&SaveURLHist, CMT_SAVEHIST,
+     (void *)when_save_hist},
+};
 #endif				/* USE_HISTORY */
+
+
+struct param_ptr params3[] = {
+    {"pagerline", P_NZINT, PI_TEXT, (void *)&PagerMax, CMT_PAGERLINE, NULL},
     {"confirm_qq", P_INT, PI_ONOFF, (void *)&confirm_on_quit, CMT_CONFIRM_QQ,
      NULL},
     {"close_tab_back", P_INT, PI_ONOFF, (void *)&close_tab_back,
@@ -567,6 +582,8 @@ struct param_ptr params8[] = {
      CMT_SHOWCOOKIE, NULL},
     {"accept_cookie", P_INT, PI_ONOFF, (void *)&accept_cookie,
      CMT_ACCEPTCOOKIE, NULL},
+    {"sync_cookie", P_INT, PI_ONOFF, (void *)&sync_cookie,
+     CMT_SYNCCOOKIE, NULL},
     {"accept_bad_cookie", P_INT, PI_SEL_C, (void *)&accept_bad_cookie,
      CMT_ACCEPTBADCOOKIE, (void *)badcookiestr},
     {"cookie_reject_domains", P_STRING, PI_TEXT,
@@ -680,6 +697,7 @@ struct param_section sections[] = {
 #ifdef USE_COLOR
     {N_("Color Settings"), params2},
 #endif				/* USE_COLOR */
+    {N_("History Settings"), params11},
     {N_("Miscellaneous Settings"), params3},
     {N_("Directory Settings"), params5},
     {N_("External Program Settings"), params6},

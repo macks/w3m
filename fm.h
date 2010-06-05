@@ -1102,6 +1102,7 @@ global int default_use_cookie init(TRUE);
 global int use_cookie init(FALSE);
 global int show_cookie init(TRUE);
 global int accept_cookie init(FALSE);
+global int sync_cookie init(FALSE);
 #define ACCEPT_BAD_COOKIE_DISCARD	0
 #define ACCEPT_BAD_COOKIE_ACCEPT	1
 #define ACCEPT_BAD_COOKIE_ASK		2
@@ -1110,7 +1111,6 @@ global char *cookie_reject_domains init(NULL);
 global char *cookie_accept_domains init(NULL);
 global TextList *Cookie_reject_domains;
 global TextList *Cookie_accept_domains;
-global int use_cookie_server init(FALSE);
 #endif				/* USE_COOKIE */
 
 #ifdef USE_IMAGE
