@@ -892,6 +892,91 @@ unescape_spaces(Str s)
 }
 
 static Str
+doUrlComplete(Str ifn, int *status, int next)
+{
+    HistItem *hitem;
+    int head_len;
+    char *p;
+
+    NCFileBuf = 0;
+    CompleteBuf = Strdup(ifn);
+
+    if (!(cm_mode & CPL_URL) || !use_hist || CompleteBuf->length == 0) {
+	*status = CPL_FAIL;
+	return Str_conv_to_system(CompleteBuf);
+    }
+    head_len = emacs_like_lineedit ? 0 :
+	((p = strrchr(CompleteBuf->ptr, '/')) ? p - CompleteBuf->ptr + 1 : 0);
+    for (hitem = CurrentHist->list->first; hitem != NULL; hitem = hitem->next) {
+	if (!strncmp(hitem->ptr, "file:", 5))
+	    continue;
+	if (!strncmp(hitem->ptr, CompleteBuf->ptr, CompleteBuf->length)) {
+	    int i, item_len;
+
+	    if (NCFileBuf == 0) {
+		CFileName = Strnew_charp(hitem->ptr);
+	    }
+	    else {
+		for (i = 0; CFileName->ptr[i] == ((char *)hitem->ptr)[i]; i++) ;
+		Strtruncate(CFileName, i);
+	    }
+
+	    if (emacs_like_lineedit) {
+		item_len = strlen(hitem->ptr);
+	    }
+	    else {
+		p = strchr(hitem->ptr + CompleteBuf->length
+			+ (Strlastchar(CompleteBuf) == '/' ? 1 : 0), '/');
+		if (p) {
+		    while (*(p + 1) == '/') p++;
+		    item_len = p - (char *)hitem->ptr + 1;
+		}
+		else
+		    item_len = strlen(hitem->ptr);
+		item_len -= head_len;
+
+		if (item_len) {
+		    for (i = 0; i < NCFileBuf; i++) {
+			if (!strncmp(CFileBuf[i], hitem->ptr + head_len, item_len)) {
+			    i = -1;
+			    break;
+			}
+		    }
+		    if (i == -1)
+			continue;
+		}
+	    }
+
+	    NCFileBuf++;
+	    CFileBuf = New_Reuse(char *, CFileBuf, NCFileBuf);
+	    CFileBuf[NCFileBuf - 1] = NewAtom_N(char, item_len + 1);
+	    strncpy(CFileBuf[NCFileBuf - 1], hitem->ptr + head_len, item_len);
+	    *(CFileBuf[NCFileBuf - 1] + item_len) = '\0';
+	}
+    }
+    if (NCFileBuf == 0) {
+	*status = CPL_FAIL;
+	if (cm_mode & CPL_ON)
+	    CompleteBuf = escape_spaces(CompleteBuf);
+	return CompleteBuf;
+    }
+    qsort(CFileBuf, NCFileBuf, sizeof(CFileBuf[0]), strCmp);
+    NCFileOffset = 0;
+    if (NCFileBuf >= 2) {
+	cm_next = TRUE;
+	*status = CPL_AMBIG;
+    }
+    else {
+	*status = CPL_OK;
+    }
+    
+    CompleteBuf = Strdup(CFileName);
+    if (cm_mode & CPL_ON)
+	CompleteBuf = escape_spaces(CompleteBuf);
+    return Str_conv_from_system(CompleteBuf);
+}
+
+static Str
 doComplete(Str ifn, int *status, int next)
 {
     int fl, i;
@@ -917,6 +1002,8 @@ doComplete(Str ifn, int *status, int next)
 	    else if (strncmp(CompleteBuf->ptr, "file:/", 6) == 0 &&
 		     CompleteBuf->ptr[6] != '/')
 		Strdelete(CompleteBuf, 0, 5);
+	    else if (use_hist)
+		return doUrlComplete(ifn, status, next);
 	    else {
 		CompleteBuf = Strdup(ifn);
 		*status = CPL_FAIL;
