@@ -1,3 +1,9 @@
+w3m (0.5.2-9~macks) unstable; urgency=low
+
+  * Applied many patches.
+
+ -- macks <macksx@gmail.com>  Mon, 14 Mar 2011 19:27:16 +0900
+
 w3m (0.5.2-9) unstable; urgency=low
 
   * debian/patches/010_upstream.patch: Sync with the upstream development
