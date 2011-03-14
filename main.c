@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.258 2007/05/31 01:19:50 inu Exp $ */
+/* $Id: main.c,v 1.267 2010/08/04 14:06:36 htrb Exp $ */
 #define MAINPROGRAM
 #include "fm.h"
 #include <signal.h>
@@ -194,7 +194,7 @@ fusage(FILE * f, int err)
 #ifdef USE_M17N
     fprintf(f, "    -I charset       document charset\n");
     fprintf(f, "    -O charset       display/output charset\n");
-#ifndef DEBIAN			/* disabled by ukai: -s is used for squeeze multi lines */
+#if 0				/* use -O{s|j|e} instead */
     fprintf(f, "    -e               EUC-JP\n");
     fprintf(f, "    -s               Shift_JIS\n");
     fprintf(f, "    -j               JIS\n");
@@ -242,10 +242,9 @@ fusage(FILE * f, int err)
     fprintf(f,
 	    "    -cookie          use cookie (-no-cookie: don't use cookie)\n");
 #endif				/* USE_COOKIE */
-    fprintf(f, "    -pauth user:pass proxy authentication\n");
-    fprintf(f, "    -graph           use graphic character\n");
-    fprintf(f, "    -no-graph        don't use graphic character\n");
-#ifdef DEBIAN			/* replaced by ukai: pager requires -s */
+    fprintf(f, "    -graph           use DEC special graphics for border of table and menu\n");
+    fprintf(f, "    -no-graph        use ACII character for border of table and menu\n");
+#if 1				/* pager requires -s */
     fprintf(f, "    -s               squeeze multiple blank lines\n");
 #else
     fprintf(f, "    -S               squeeze multiple blank lines\n");
@@ -323,21 +322,27 @@ static void
 sig_chld(int signo)
 {
     int p_stat;
-#ifdef HAVE_WAITPID
     pid_t pid;
 
-    while ((pid = waitpid(-1, &p_stat, WNOHANG)) > 0) {
-	;
-    }
+#ifdef HAVE_WAITPID
+    while ((pid = waitpid(-1, &p_stat, WNOHANG)) > 0)
 #elif HAVE_WAIT3
-    int pid;
-
-    while ((pid = wait3(&p_stat, WNOHANG, NULL)) > 0) {
-	;
-    }
+    while ((pid = wait3(&p_stat, WNOHANG, NULL)) > 0)
 #else
-    wait(&p_stat);
+    if ((pid = wait(&p_stat)) > 0)
 #endif
+    {
+	DownloadList *d;
+
+	if (WIFEXITED(p_stat)) {
+	    for (d = FirstDL; d != NULL; d = d->next) {
+		if (d->pid == pid) {
+		    d->err = WEXITSTATUS(p_stat);
+		    break;
+		}
+	    }
+	}
+    }
     mySignal(SIGCHLD, sig_chld);
     return;
 }
@@ -525,7 +530,7 @@ main(int argc, char **argv, char **envp)
 		    PagerMax = atoi(argv[i]);
 	    }
 #ifdef USE_M17N
-#ifndef DEBIAN			/* XXX: use -o kanjicode={S|J|E} */
+#if 0				/* use -O{s|j|e} instead */
 	    else if (!strcmp("-s", argv[i]))
 		DisplayCharset = WC_CES_SHIFT_JIS;
 	    else if (!strcmp("-j", argv[i]))
@@ -557,9 +562,9 @@ main(int argc, char **argv, char **envp)
 	    }
 #endif
 	    else if (!strcmp("-graph", argv[i]))
-		UseGraphicChar = TRUE;
+		UseGraphicChar = GRAPHIC_CHAR_DEC;
 	    else if (!strcmp("-no-graph", argv[i]))
-		UseGraphicChar = FALSE;
+		UseGraphicChar = GRAPHIC_CHAR_ASCII;
 	    else if (!strcmp("-T", argv[i])) {
 		if (++i >= argc)
 		    usage();
@@ -629,6 +634,9 @@ main(int argc, char **argv, char **envp)
 		if (++i >= argc)
 		    usage();
 		COLS = atoi(argv[i]);
+		if (COLS > MAXIMUM_COLS) {
+		    COLS = MAXIMUM_COLS;
+		}
 	    }
 	    else if (!strcmp("-ppc", argv[i])) {
 		double ppc;
@@ -697,18 +705,7 @@ main(int argc, char **argv, char **envp)
 		accept_cookie = TRUE;
 	    }
 #endif				/* USE_COOKIE */
-	    else if (!strcmp("-pauth", argv[i])) {
-		if (++i >= argc)
-		    usage();
-		proxy_auth_cookie = Strnew_m_charp("Basic ",
-						   encodeB(argv[i])->ptr,
-						   NULL);
-		while (argv[i][0]) {
-		    argv[i][0] = '\0';
-		    argv[i]++;
-		}
-	    }
-#ifdef DEBIAN
+#if 1				/* pager requires -s */
 	    else if (!strcmp("-s", argv[i]))
 #else
 	    else if (!strcmp("-S", argv[i]))
@@ -868,12 +865,6 @@ main(int argc, char **argv, char **envp)
 			   w3m_version,
 			   "<br>Written by <a href='mailto:aito@fw.ipsj.or.jp'>Akinori Ito</a>",
 			   NULL);
-#ifdef DEBIAN
-	    Strcat_m_charp(s_page,
-			   "<p>Debian package is maintained by <a href='mailto:ukai@debian.or.jp'>Fumitoshi UKAI</a>.",
-			   "You can read <a href='file:///usr/share/doc/w3m/'>w3m documents on your local system</a>.",
-			   NULL);
-#endif				/* DEBIAN */
 	    newbuf = loadHTMLString(s_page);
 	    if (newbuf == NULL)
 		Strcat_charp(err_msg, "w3m: Can't load string.\n");
@@ -1152,18 +1143,11 @@ main(int argc, char **argv, char **envp)
 	    mouse_inactive();
 #endif				/* USE_MOUSE */
 	if (IS_ASCII(c)) {	/* Ascii */
-	    if( vi_prec_num ){
-		if(((prec_num && c == '0') || '1' <= c) && (c <= '9')) {
-		    prec_num = prec_num * 10 + (int)(c - '0');
-		    if (prec_num > PREC_LIMIT)
-			prec_num = PREC_LIMIT;
-		}
-		else {
-		    set_buffer_environ(Currentbuf);
-		    save_buffer_position(Currentbuf);
-		    keyPressEventProc((int)c);
-		    prec_num = 0;
-		}
+	    if (('0' <= c) && (c <= '9') &&
+		(prec_num || (GlobalKeymap[c] == FUNCNAME_nulcmd))) {
+		prec_num = prec_num * 10 + (int)(c - '0');
+		if (prec_num > PREC_LIMIT)
+		   prec_num = PREC_LIMIT;
 	    }
 	    else {
 		set_buffer_environ(Currentbuf);
@@ -1284,8 +1268,25 @@ do_dump(Buffer *buf)
 	dump_head(buf);
     if (w3m_dump & DUMP_SOURCE)
 	dump_source(buf);
-    if (w3m_dump == DUMP_BUFFER)
+    if (w3m_dump == DUMP_BUFFER) {
+	int i;
 	saveBuffer(buf, stdout, FALSE);
+	if (displayLinkNumber && buf->href) {
+	    printf("\nReferences:\n\n");
+	    for (i = 0; i < buf->href->nanchor; i++) {
+	        ParsedURL pu;
+	        static Str s = NULL;
+		if (buf->href->anchors[i].slave)
+		    continue;
+	        parseURL2(buf->href->anchors[i].url, &pu, baseURL(buf));
+	        s = parsedURL2Str(&pu);
+    	        if (DecodeURL)
+		    s = Strnew_charp(url_unquote_conv
+				     (s->ptr, Currentbuf->document_charset));
+	        printf("[%d] %s\n", buf->href->anchors[i].hseq + 1, s->ptr);
+	    }
+	}
+    }
     mySignal(SIGINT, prevtrap);
 }
 
@@ -4623,10 +4624,10 @@ DEFUN(vwSrc, SOURCE VIEW, "View HTML source")
 
     buf = newBuffer(INIT_BUFFER_WIDTH);
 
-    if (!strcasecmp(Currentbuf->type, "text/html")) {
+    if (is_html_type(Currentbuf->type)) {
 	buf->type = "text/plain";
 	if (Currentbuf->real_type &&
-	    !strcasecmp(Currentbuf->real_type, "text/html"))
+	    is_html_type(Currentbuf->real_type))
 	    buf->real_type = "text/plain";
 	else
 	    buf->real_type = Currentbuf->real_type;
@@ -4776,8 +4777,8 @@ DEFUN(reload, RELOAD, "Reload buffer")
     repBuffer(Currentbuf, buf);
     if ((buf->type != NULL) && (sbuf.type != NULL) &&
 	((!strcasecmp(buf->type, "text/plain") &&
-	  !strcasecmp(sbuf.type, "text/html")) ||
-	 (!strcasecmp(buf->type, "text/html") &&
+	  is_html_type(sbuf.type)) ||
+	 (is_html_type(buf->type) &&
 	  !strcasecmp(sbuf.type, "text/plain")))) {
 	vwSrc();
 	if (Currentbuf != buf)
@@ -5099,7 +5100,7 @@ DEFUN(dispI, DISPLAY_IMAGE, "Restart loading and drawing of images")
 	return;
     displayImage = TRUE;
     /*
-     * if (!(Currentbuf->type && !strcmp(Currentbuf->type, "text/html")))
+     * if (!(Currentbuf->type && is_html_type(Currentbuf->type)))
      * return;
      */
     Currentbuf->image_flag = IMG_FLAG_AUTO;
@@ -5112,7 +5113,7 @@ DEFUN(stopI, STOP_IMAGE, "Stop loading and drawing of images")
     if (!activeImage)
 	return;
     /*
-     * if (!(Currentbuf->type && !strcmp(Currentbuf->type, "text/html")))
+     * if (!(Currentbuf->type && is_html_type(Currentbuf->type)))
      * return;
      */
     Currentbuf->image_flag = IMG_FLAG_SKIP;
@@ -6355,7 +6356,8 @@ addDownloadList(pid_t pid, char *url, char *save, char *lock, clen_t size)
     d->lock = lock;
     d->size = size;
     d->time = time(0);
-    d->ok = FALSE;
+    d->running = TRUE;
+    d->err = 0;
     d->next = NULL;
     d->prev = LastDL;
     if (LastDL)
@@ -6375,7 +6377,7 @@ checkDownloadList(void)
     if (!FirstDL)
 	return FALSE;
     for (d = FirstDL; d != NULL; d = d->next) {
-	if (!d->ok && !lstat(d->lock, &st))
+	if (d->running && !lstat(d->lock, &st))
 	    return TRUE;
     }
     return FALSE;
@@ -6415,15 +6417,16 @@ DownloadListBuffer(void)
 		       "<form method=internal action=download><hr>\n");
     for (d = LastDL; d != NULL; d = d->prev) {
 	if (lstat(d->lock, &st))
-	    d->ok = TRUE;
+	    d->running = FALSE;
 	Strcat_charp(src, "<pre>\n");
 	Strcat(src, Sprintf("%s\n  --&gt; %s\n  ", html_quote(d->url),
 			    html_quote(conv_from_system(d->save))));
 	duration = cur_time - d->time;
 	if (!stat(d->save, &st)) {
 	    size = st.st_size;
-	    if (d->ok) {
-		d->size = size;
+	    if (!d->running) {
+		if (!d->err)
+		    d->size = size;
 		duration = st.st_mtime - d->time;
 	    }
 	}
@@ -6442,7 +6445,7 @@ DownloadListBuffer(void)
 		Strcat_char(src, '_');
 	    Strcat_char(src, '\n');
 	}
-	if (!d->ok && size < d->size)
+	if ((d->running || d->err) && size < d->size)
 	    Strcat(src, Sprintf("  %s / %s bytes (%d%%)",
 				convert_size3(size), convert_size3(d->size),
 				(int)(100.0 * size / d->size)));
@@ -6453,20 +6456,28 @@ DownloadListBuffer(void)
 	    Strcat(src, Sprintf("  %02d:%02d:%02d  rate %s/sec",
 				duration / (60 * 60), (duration / 60) % 60,
 				duration % 60, convert_size(rate, 1)));
-	    if (!d->ok && size < d->size && rate) {
+	    if (d->running && size < d->size && rate) {
 		eta = (d->size - size) / rate;
 		Strcat(src, Sprintf("  eta %02d:%02d:%02d", eta / (60 * 60),
 				    (eta / 60) % 60, eta % 60));
 	    }
 	}
 	Strcat_char(src, '\n');
-	if (d->ok) {
+	if (!d->running) {
 	    Strcat(src, Sprintf("<input type=submit name=ok%d value=OK>",
 				d->pid));
-	    if (size < d->size)
-		Strcat_charp(src, " Download incompleted");
-	    else
-		Strcat_charp(src, " Download completed");
+	    switch (d->err) {
+	    case 0: if (size < d->size)
+			Strcat_charp(src, " Download ended but probably not complete");
+		    else
+			Strcat_charp(src, " Download complete");
+		    break;
+	    case 1: Strcat_charp(src, " Error: could not open destination file");
+		    break;
+	    case 2: Strcat_charp(src, " Error: could not write to file (disk full)");
+		    break;
+	    default: Strcat_charp(src, " Error: unknown reason");
+	    }
 	}
 	else
 	    Strcat(src, Sprintf("<input type=submit name=stop%d value=STOP>",
@@ -6520,7 +6531,7 @@ stopDownload(void)
     if (!FirstDL)
 	return;
     for (d = FirstDL; d != NULL; d = d->next) {
-	if (d->ok)
+	if (!d->running)
 	    continue;
 #ifndef __MINGW32_VERSION
 	kill(d->pid, SIGKILL);

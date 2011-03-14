@@ -1,4 +1,4 @@
-/* $Id: terms.c,v 1.57 2007/05/30 04:44:00 inu Exp $ */
+/* $Id: terms.c,v 1.62 2010/08/04 14:06:36 htrb Exp $ */
 /* 
  * An original curses library for EUC-kanji by Akinori ITO,     December 1989
  * revised by Akinori ITO, January 1995
@@ -26,7 +26,7 @@
 #endif				/* USE_GPM */
 #ifdef USE_SYSMOUSE
 #include <osreldate.h>
-#if (__FreeBSD_version >= 400017)
+#if (__FreeBSD_version >= 400017) || (__FreeBSD_kernel_version >= 400017)
 #include <sys/consio.h>
 #include <sys/fbio.h>
 #else
@@ -1201,7 +1201,7 @@ graphend(void)
 int
 graph_ok(void)
 {
-    if (!UseGraphicChar)
+    if (UseGraphicChar != GRAPHIC_CHAR_DEC)
 	return 0;
     return T_as[0] != 0 && T_ae[0] != 0 && T_ac[0] != 0;
 }
@@ -1897,7 +1897,7 @@ wgetch(void *p)
 int
 do_getch()
 {
-    if (is_xterm)
+    if (is_xterm || !gpm_handler)
 	return getch();
     else
 	return Gpm_Getch();
@@ -2037,6 +2037,7 @@ mouse_init()
     conn.maxMod = 0;
     conn.minMod = 0;
 
+    gpm_handler = NULL;
     r = Gpm_Open(&conn, 0);
     if (r == -2) {
 	/*

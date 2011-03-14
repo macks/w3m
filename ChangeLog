@@ -1,3 +1,194 @@
+2010-08-04  Ito Hiroyuki  <ZXB01226@nifty.com>
+
+	* [w3m-dev 04369] Re: w3m's bugs from bugs.debian.org
+	* terms.c (graph_ok): fix condition (UseGraphicChar != GRAPHIC_CHAR_DEC)
+	* symbol.c (get_symbol): fix condition (UseGraphicChar != GRAPHIC_CHAR_ASCII)
+	* rc.c (params1): type of graphic_char option is PI_SEL_C
+	* main.c (main): use GRAPHIC_CHAR_ASCII and GRAPHIC_CHAR_DEC instead of FALSE and TRUE
+	* fm.h (GRAPHIC_CHAR_ASCII, GRAPHIC_CHAR_DEC, GRAPHIC_CHAR_CHARSET): added
+
+2010-08-03  d+w3m@vdr.jp
+
+	* [w3m-dev 04363] Re: w3m's bugs from bugs.debian.org
+	* doc/w3m.1: revert option -S
+	* doc-jp/w3m.1: revert option -S, -e, -j and -s
+	* main.c: remove codes for Debian
+
+2010-08-03  Ito Hiroyuki  <ZXB01226@nifty.com>
+
+	* [w3m-dev 04343]
+	* file.c (loadGeneralFile): register user name and password for proxy authentication.
+	* url.c (HTTPrequest): unused variable seen_proxy_auth was removed
+	* fm.h: global variables proxy_auth_cookie and pauth are removed
+	* main.c (main): remove option -pauth
+	* doc/MANUAL.html: ditto
+	* doc-jp/MANUAL.html: ditto
+	* doc-jp/w3m.1: ditto
+	* doc/w3m.1: ditto
+	* doc/README.passwd: added
+	* doc-jp/README.passwd: added
+
+2010-07-31  Tatsuya Kinoshita  <tats@vega.ocn.ne.jp>
+
+	* [w3m-dev 04350] Re: w3m's bugs from bugs.debian.org
+	* file.c (process_img): Revert the change of using ATTR_TITLE if ATTR_ALT is empty.
+
+2010-07-30  Ito Hiroyuki  <ZXB01226@nifty.com>
+
+	* [w3m-dev 04348] Re: "important" bugs from bugs.debian.org
+	* file.c (TEXTAREA_ATTR_COL_MAX, TEXTAREA_ATTR_ROWS_MAX): added.
+	(process_textarea): check cur_textarea_size > TEXTAREA_ATTR_COL_MAX and cur_textarea_rows > TEXTAREA_ATTR_ROWS_MAX
+
+2010-07-30  Ito Hiroyuki  <ZXB01226@nifty.com>
+
+	* [w3m-dev 04345] Re: "important" bugs from bugs.debian.org
+	* file.c (HR_ATTR_WIDTH_MAX): added.
+	(process_hr): check w > HR_ATTR_WIDTH_MAX
+
+2010-07-26  d+w3m@vdr.jp
+
+	* [w3m-dev 04237] [patch] cookie avoid [wrong number of dots]
+	* rc.c: Introduce option cookie_avoid_wrong_number_of_dots.
+	* fm.h: add global variables cookie_avoid_wrong_number_of_dots and Cookie_avoid_wrong_number_of_dots_domains.
+	* cookie.c (check_avoid_wrong_number_of_dots_domain): added.
+	(add_cookie): use check_avoid_wrong_number_of_dots_domain().
+
+2010-07-26  Ito Hiroyuki  <ZXB01226@nifty.com>
+
+	* acinclude.m4: define AC_W3M_SSL_DIGEST_AUTH
+
+2010-07-25  AIDA Shinra <shinra@j10n.org>
+
+	* [w3m-dev 04049] Ctrl-C safe resolver
+	* fm.h (GRAPHIC_CHAR_ASCII, GRAPHIC_CHAR_CHARSET, GRAPHIC_CHAR_ALL): removed.
+	* fm.h: UseGraphicChar is initialized as FALSE.
+	* main.c (sig_chld): use TRUE and FALSE instead of GRAPHIC_CHAR_ALL and GRAPHIC_CHAR_ASCII.
+	* merge ambiguous width patch ( http://www.j10n.org/files/w3m-cvs-1.914-ambwidth.patch ).
+
+2010-07-24  Ito Hiroyuki  <ZXB01226@nifty.com>
+
+	* [w3m-dev 04326] suppress compile warnings
+	* file.c (digest_hex): type of the parameter s is "unsigned char *".
+	(AuthDigestCred): use unsigned char.
+	(ex_efct): type of the function is "static int".
+
+2010-07-20  Sascha Silbe <sascha-debian-bugs-w3m-1@silbe.org>
+
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=523159#5
+	* url.c (openSSLHandle): add support for TLS SNI (Server Name Indication)
+
+2010-07-19  Karsten Schoelzel <kuser@gmx.de>
+
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=329862#20
+	* table.c (feed_table_tag): check displayLinkNumber.
+	* proto.h: add getLinkNumberStr().
+	* main.c (do_dump): check displayLinkNumber.
+	* fm.h: add global variable displayLinkNumber.
+	* file.c (getLinkNumberStr): added.
+	(process_input, process_select, HTMLtagproc1): check displayLinkNumber.
+
+2010-07-19  Karsten Schoelzel <kuser@gmx.de>
+
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=329863#8
+	* rc.c: Introduce option pseudo_inlines.
+	* fm.h: add global variable pseudoInlines.
+	* file.c (process_img): check q.
+
+2010-07-19  "Trent W. Buck" <twb@cybersource.com.au>
+
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=537706#10
+	* rc.c (interpret_rc): check line->length before call Strchop().
+
+2010-07-19  Karsten Schoelzel <kuser@gmx.de>
+
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=366284#5
+	* rc.c (init_rc): check config_file is NULL or not.
+	(panel_set_option): check config_file instead of no_rc_dir.
+
+2010-07-19  Karsten Schoelzel <kuser@gmx.de>
+
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=261174#10
+	* terms.c (graph_ok): check UseGraphicChar is GRAPHIC_CHAR_ALL or not.
+	* symbol.c (get_symbol): check UseGraphicChar.
+	* rc.c (graphic_char_str): added.
+	* main.c (sig_chld): use GRAPHIC_CHAR_ASCII and GRAPHIC_CHAR_ALL.
+	* fm.h (GRAPHIC_CHAR_ASCII, GRAPHIC_CHAR_CHARSET, GRAPHIC_CHAR_ALL): added.
+	* fm.h: UseGraphicChar is initialized as GRAPHIC_CHAR_ASCII.
+
+2010-07-19  Karsten Schoelzel <kuser@gmx.de>
+
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=185006#22
+	* main.c (sig_chld): save exit code to d->err.
+	(addDownloadList): initialize d->running and d->err.
+	(DownloadListBuffer): check d->err.
+
+	* fm.h (_DownloadList): add running and err.
+
+	* file.c (save2tmp): check returned value of Strfputs().
+	(doFileSave): exit code is depend on the returned value of save2tmp().
+
+2010-07-19  d+w3m@vdr.jp
+
+	* [w3m-dev 04238] [patch] simple preserve space
+	* rc.c: Introduce option simple_preserve_space.
+	* fm.h: add global variable SimplePreserveSpace.
+	* file.c (HTMLlineproc0): check SimplePreserveSpace.
+
+2010-07-18 Karsten Schoelzel <kuser@gmx.de>
+
+	http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=242599#21
+	* file.c (is_html_type): added.
+	(examineFile, loadGeneralFile, _saveBuffer)
+	(openGeneralPagerBuffer, reloadBuffer): use is_html_type() instead
+	of strcasecmp().
+	(loadGeneralFile): set f.guess_tupe
+	* display.c (displayBuffer): use is_html_type() instead of strcasecmp().
+	* buffer.c (reshapeBuffer): use is_html_type() instead of strcasecmp().
+	* backend.c (internal_get): use is_html_type() instead of strcasecmp().
+	* main.c (vwSrc, reload, dispI, stopI): use is_html_type() instead of strcasecmp().
+	* proto.h: add is_html_type()
+	* url.c: add "xhtml" to DefaultGuess.
+
+2010-07-18 Hironori SAKAMOTO <hsaka@mth.biglobe.ne.jp>
+
+	* [w3m-dev 04286] Re: break textform when buffer back
+	* form.c (form_update_line): set line->size
+
+2010-07-18 d+w3m@vdr.jp
+
+	* [w3m-dev 04319] Re: w3m's bugs from bugs.debian.org
+	* doc/w3m.1: fix typo.
+	* doc-jp/w3m.1: update
+
+2010-07-18 Petr Salinger <Petr.Salinger@seznam.cz>
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=493486
+	* terms.c: fix version check logic for FreeBSD
+
+2010-07-18 Colin Watson <cjwatson@ubuntu.com>
+	* http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=325699
+	* scripts/w3mman/w3mman2html.cgi.in (Content-Type): "MAN_KEEP_FORMATTING=1"
+
+2010-07-18  Ludwig Nussel <ludwig.nussel@...e.de>
+	* http://www.openwall.com/lists/oss-security/2010/06/14/4
+	* istream.c (ssl_check_cert_ident): replace \0 to make full string
+	visible to user (CVE-2010-2074).
+
+2007-06-07  Hironori Sakamoto <hsaka@mth.biglobe.ne.jp>
+
+	* [w3m-dev 04279] charset
+	* libwc/ces.h, libwc/charset.c: set charset to Shift_JIS, when locale 
+	  is japanese, jp_JP.PCK, ja_JP.IBM-932, ja_JP.IBM-943, or windows-31j.
+
+2007-06-07  Hironori Sakamoto <hsaka@mth.biglobe.ne.jp>
+
+	* [w3m-dev 04278] Re: segfault on CentOS4.5/libgc6.8
+	* term.c: add handling xterm-incompatible terminals without gpm.
+
+2007-06-04  Hironori Sakamoto <hsaka@mth.biglobe.ne.jp>
+
+	* [w3m-dev 04271] vi_prec_num
+	* main.c: make number prefixes working when vi_prec_num=0.
+
 2007-05-31  Dai Sato <satodai@w3m.jp>
 
 	* w3m 0.5.2
@@ -8917,4 +9108,4 @@ a	* [w3m-dev 03276] compile error on EWS4800
 	* release-0-2-1
 	* import w3m-0.2.1
 
-$Id: ChangeLog,v 1.998 2007/05/31 12:17:05 inu Exp $
+$Id: ChangeLog,v 1.1027 2010/08/04 14:06:35 htrb Exp $

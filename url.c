@@ -1,4 +1,4 @@
-/* $Id: url.c,v 1.95 2007/05/23 15:06:06 inu Exp $ */
+/* $Id: url.c,v 1.98 2010/08/03 10:02:16 htrb Exp $ */
 #include "fm.h"
 #ifndef __MINGW32_VERSION
 #include <sys/types.h>
@@ -101,6 +101,7 @@ static struct table2 DefaultGuess[] = {
     {"html", "text/html"},
     {"htm", "text/html"},
     {"shtml", "text/html"},
+    {"xhtml", "application/xhtml+xml"},
     {"gif", "image/gif"},
     {"jpeg", "image/jpeg"},
     {"jpg", "image/jpeg"},
@@ -374,6 +375,9 @@ openSSLHandle(int sock, char *hostname, char **p_cert)
 #if SSLEAY_VERSION_NUMBER >= 0x00905100
     init_PRNG();
 #endif				/* SSLEAY_VERSION_NUMBER >= 0x00905100 */
+#if (SSLEAY_VERSION_NUMBER >= 0x00908070) && !defined(OPENSSL_NO_TLSEXT)
+    SSL_set_tlsext_host_name(handle,hostname);
+#endif				/* (SSLEAY_VERSION_NUMBER >= 0x00908070) && !defined(OPENSSL_NO_TLSEXT) */
     if (SSL_connect(handle) > 0) {
 	Str serv_cert = ssl_get_certificate(handle, hostname);
 	if (serv_cert) {
@@ -1375,7 +1379,6 @@ HTTPrequest(ParsedURL *pu, ParsedURL *current, HRequest *hr, TextList *extra)
     Str tmp;
     TextListItem *i;
     int seen_www_auth = 0;
-    int seen_proxy_auth = 0;
 #ifdef USE_COOKIE
     Str cookie;
 #endif				/* USE_COOKIE */
@@ -1399,7 +1402,6 @@ HTTPrequest(ParsedURL *pu, ParsedURL *current, HRequest *hr, TextList *extra)
 	    }
 	    if (strncasecmp(i->ptr, "Proxy-Authorization:",
 			    sizeof("Proxy-Authorization:") - 1) == 0) {
-		seen_proxy_auth = 1;
 #ifdef USE_SSL
 		if (pu->scheme == SCM_HTTPS
 		    && hr->command != HR_COMMAND_CONNECT)
